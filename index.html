@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Check-up do Negócio · Caverna</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0F3534;
+    --bg2: #13403E;
+    --card: #174A48;
+    --line: rgba(232, 201, 106, .18);
+    --gold: #C9A84C;
+    --gold2: #E8C96A;
+    --accent: #E8805F;
+    --text: #F3EDE1;
+    --muted: rgba(243, 237, 225, .62);
+    --red: #E26A5A;
+    --yellow: #E8C96A;
+    --green: #7FC9A0;
+    --grey: rgba(243, 237, 225, .25);
+    --ok: #1FFF7A;     /* verde brilhante: o que está pronto */
+    --falta: #E8805F;  /* coral: o que falta */
+    --campo: #174A48;
+  }
+  /* Identidade da Caverna: preto quente e dourado; o verde fica só no que ela preenche e toca */
+  body.caverna {
+    --bg: #0A0A08; --bg2: #111108; --card: #1A1A12; --text: #F5F0E8; --muted: rgba(245, 240, 232, .65);
+    --line: rgba(201, 168, 76, .25); --campo: #0F3534;
+  }
+  body.caverna .no .miolo { background: #111108; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Montserrat', sans-serif; font-weight: 300; line-height: 1.6; }
+  h1, h2, h3 { font-family: 'Cormorant Garamond', serif; font-weight: 600; line-height: 1.15; }
+  em { color: var(--gold2); font-style: italic; }
+  button { font-family: inherit; cursor: pointer; }
+
+  /* ── Estrutura ── */
+  .app { display: flex; min-height: 100vh; }
+  .nome-negocio { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; color: var(--gold2); margin: -4px 0 10px; }
+
+  main { flex: 1; min-width: 0; padding: 44px 48px 80px; }
+  .tela { display: none; max-width: 900px; margin: 0 auto; }
+  .tela.ativa { display: block; animation: surge .35s ease; }
+  @keyframes surge { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .kicker { font-size: .62rem; letter-spacing: .24em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+  .titulo { font-size: clamp(2rem, 4.5vw, 2.9rem); margin-bottom: 12px; }
+  .sub { color: var(--muted); max-width: 620px; font-size: .92rem; }
+
+  /* ── Painel (início) ── */
+  .boas-vindas { display: flex; gap: 12px; align-items: center; margin: 22px 0 6px; flex-wrap: wrap; }
+  .boas-vindas input {
+    background: var(--campo); border: 1px solid var(--line); color: var(--text); padding: 11px 14px; border-radius: 10px;
+    font-family: inherit; font-size: .85rem; min-width: 240px;
+  }
+  .grade-setores { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 30px; }
+  .card-setor {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; text-align: left; color: var(--text);
+    transition: .2s; position: relative; overflow: hidden;
+  }
+  .card-setor:hover { transform: translateY(-2px); border-color: rgba(232, 201, 106, .45); }
+  .card-setor .num { font-size: .62rem; letter-spacing: .2em; color: var(--gold); text-transform: uppercase; }
+  .card-setor h3 { font-size: 1.55rem; margin: 6px 0 2px; }
+  .card-setor .frase { font-size: .78rem; color: var(--muted); }
+  .medidor { margin-top: 18px; }
+  .medidor .linha { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 7px; }
+  .medidor .valor { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 600; }
+  .medidor .rotulo { font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; }
+  .barra { height: 8px; border-radius: 8px; background: rgba(255, 255, 255, .07); overflow: hidden; }
+  .barra span { display: block; height: 100%; width: 0; border-radius: 8px; transition: width .6s ease, background .3s; }
+  .card-setor .abrir { margin-top: 14px; font-size: .72rem; color: var(--gold2); letter-spacing: .06em; }
+
+  .corrente {
+    margin-top: 30px; padding: 22px 24px; border-radius: 16px; border: 1px solid var(--line);
+    background: linear-gradient(135deg, rgba(232, 128, 95, .12), rgba(201, 168, 76, .06));
+  }
+  .corrente h3 { font-size: 1.4rem; margin-bottom: 6px; }
+  .corrente p { font-size: .88rem; color: var(--muted); }
+  .corrente .passos { text-align: left; max-width: 360px; margin: 12px auto 12px; padding-left: 20px; font-size: .86rem; color: var(--text); }
+  .corrente .passos li { padding: 3px 0; }
+  .ouro { color: var(--gold2); }
+  .corrente strong { color: var(--text); font-weight: 600; }
+
+
+  /* ── Sistema em círculos ── */
+  .teste-visual { display: flex; gap: 6px; justify-content: center; margin-top: 28px; }
+  .teste-visual button { background: transparent; border: 1px dashed var(--accent); color: var(--accent); padding: 6px 12px; border-radius: 20px; font-size: .66rem; }
+  .teste-visual button.on { background: rgba(232, 128, 95, .15); border-style: solid; }
+  .sistema { position: relative; width: 100%; max-width: 480px; aspect-ratio: 1; margin: 18px auto 0; }
+  .sistema svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .no {
+    position: absolute; width: 36%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; border: none; padding: 0;
+    color: var(--text); transition: transform .2s; box-shadow: 0 0 24px rgba(0, 0, 0, .25);
+  }
+  .no:hover { transform: translate(-50%, -50%) scale(1.05); }
+  .no .miolo {
+    position: absolute; inset: 6%; border-radius: 50%; background: var(--card); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; padding: 6px; line-height: 1.15;
+  }
+  .no .ic { font-size: clamp(1rem, 4vw, 1.4rem); }
+  .no .nm { font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: clamp(.72rem, 3vw, 1rem); margin: 2px 0; }
+  .no .pc { font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: clamp(.95rem, 4vw, 1.35rem); }
+  .no .vb { font-size: clamp(.5rem, 2vw, .62rem); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+  .centro { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 21%; text-align: center; }
+  .centro .k { font-size: clamp(.48rem, 1.9vw, .6rem); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  .centro .t { font-family: 'Cormorant Garamond', serif; font-size: clamp(.8rem, 3.2vw, 1.1rem); color: var(--gold2); line-height: 1.1; }
+
+  /* ── Setor ── */
+  .voltar { background: none; border: none; color: var(--muted); font-size: .75rem; margin-bottom: 20px; }
+  .voltar:hover { color: var(--gold2); }
+  .cabeca-setor { display: flex; justify-content: space-between; gap: 24px; align-items: flex-end; flex-wrap: wrap; }
+  .cabeca-setor .medidor { min-width: 220px; margin: 0; }
+
+  .fluxo { display: flex; align-items: stretch; gap: 0; margin: 34px 0 10px; }
+  .etapa {
+    flex: 1; min-width: 0; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 8px;
+    text-align: center; color: var(--text); transition: .2s; position: relative;
+  }
+  .etapa:hover { border-color: rgba(232, 201, 106, .5); }
+  .etapa.aberta { border-color: var(--gold2); box-shadow: 0 0 0 1px var(--gold2), 0 0 22px rgba(232, 201, 106, .18); }
+  .etapa .icone { font-size: 1.5rem; }
+  .etapa .nome { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 600; margin: 4px 0 2px; }
+  .etapa .estado { font-size: .64rem; letter-spacing: .1em; text-transform: uppercase; }
+  .etapa .mini { height: 4px; border-radius: 4px; background: rgba(255, 255, 255, .07); margin-top: 10px; overflow: hidden; }
+  .etapa .mini span { display: block; height: 100%; width: 0; transition: width .5s; }
+  .seta { display: flex; align-items: center; color: var(--gold); padding: 0 5px; font-size: 1.1rem; flex-shrink: 0; }
+  .dica-fluxo { font-size: .72rem; color: var(--muted); text-align: center; margin-bottom: 18px; }
+
+  .painel-etapa {
+    background: var(--bg2); border: 1px solid var(--line); border-radius: 16px; padding: 26px; margin-top: 8px;
+  }
+  .painel-etapa h3 { font-size: 1.5rem; }
+  .painel-etapa .pra-que { font-size: .85rem; color: var(--muted); margin: 4px 0 20px; }
+  .check {
+    display: flex; gap: 14px; align-items: center; justify-content: space-between; padding: 13px 0;
+    border-top: 1px solid rgba(255, 255, 255, .06); flex-wrap: wrap;
+  }
+  .check p { font-size: .87rem; flex: 1; min-width: 220px; }
+  .opcoes { display: flex; gap: 6px; }
+  .opcoes button {
+    background: var(--campo); border: 1px solid var(--line); color: var(--muted); padding: 7px 12px; border-radius: 20px; font-size: .7rem; transition: .15s;
+  }
+  .opcoes button:hover { color: var(--text); }
+  .opcoes button.on[data-v="1"] { background: rgba(127, 201, 160, .16); border-color: var(--green); color: var(--green); }
+  .opcoes button.on[data-v="0.5"] { background: rgba(232, 201, 106, .14); border-color: var(--yellow); color: var(--yellow); }
+  .opcoes button.on[data-v="0"] { background: rgba(226, 106, 90, .14); border-color: var(--red); color: var(--red); }
+
+  .escrever { margin-top: 26px; }
+  .escrever label { display: block; font-size: .8rem; color: var(--gold2); margin-bottom: 8px; }
+  textarea {
+    width: 100%; min-height: 90px; background: var(--campo); border: 1px solid var(--line); border-radius: 12px; color: var(--text);
+    padding: 13px 14px; font-family: inherit; font-size: .86rem; resize: vertical;
+  }
+  textarea:focus, .boas-vindas input:focus { outline: none; border-color: var(--gold2); }
+  .caixa-voz { position: relative; }
+  .caixa-voz textarea { padding-bottom: 58px; }
+  .mic {
+    position: absolute; right: 10px; bottom: 12px; display: flex; align-items: center; gap: 8px;
+    background: var(--accent); color: #fff; border: none; border-radius: 30px; padding: 9px 16px 9px 12px; font-size: .74rem; font-weight: 500;
+    box-shadow: 0 0 16px rgba(232, 128, 95, .35); transition: .2s;
+  }
+  .mic svg { width: 18px; height: 18px; }
+  .mic.gravando { background: var(--red); animation: pulsa 1.2s infinite; }
+  @keyframes pulsa { 0%, 100% { box-shadow: 0 0 0 0 rgba(226, 106, 90, .6); } 50% { box-shadow: 0 0 0 10px rgba(226, 106, 90, 0); } }
+  .aviso-voz { font-size: .7rem; color: var(--muted); margin-top: 8px; }
+
+  .proximo-setor { margin-top: 26px; display: flex; justify-content: flex-end; }
+  .btn {
+    background: var(--gold); color: #10302F; border: none; padding: 14px 26px; border-radius: 30px; font-size: .74rem;
+    font-weight: 600; letter-spacing: .12em; text-transform: uppercase; transition: .2s;
+  }
+  .btn:hover { background: var(--gold2); }
+  .btn.contorno { background: var(--campo); color: var(--gold2); border: 1px solid var(--gold); }
+  .btn.whats { background: #25D366; color: #fff; }
+
+  /* ── Resultado ── */
+  .resultado-lista { margin-top: 26px; display: grid; gap: 14px; }
+  .resultado-item { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+  .resultado-item h3 { font-size: 1.25rem; margin-bottom: 10px; }
+  .resultado-item ul { list-style: none; font-size: .82rem; color: var(--muted); }
+  .resultado-item li { padding: 3px 0; }
+  .resultado-item li::before { content: '○  '; color: var(--accent); }
+  .acoes-finais { margin-top: 28px; display: flex; gap: 12px; flex-wrap: wrap; }
+
+
+  /* ── Tudo centralizado ── */
+  .tela > .kicker, .tela > .titulo, .tela > .nome-negocio, .tela > .sub { text-align: center; }
+  .sub { margin-left: auto; margin-right: auto; }
+  .boas-vindas { justify-content: center; }
+  .corrente { text-align: center; }
+  .acoes-finais, .proximo-setor { justify-content: center; }
+  .cabeca-setor { flex-direction: column; align-items: center; text-align: center; }
+  .cabeca-setor .medidor { width: 100%; max-width: 320px; }
+  .painel-etapa > .kicker, .painel-etapa > h3, .painel-etapa > .pra-que { text-align: center; }
+  .escrever label { text-align: center; }
+  .resultado-item h3 { text-align: center; }
+
+  /* ── Celular ── */
+  @media (max-width: 820px) {
+    main { padding: 28px 16px 60px; }
+    .grade-setores { grid-template-columns: 1fr; }
+    .fluxo { flex-direction: column; overflow: visible; }
+    .seta { justify-content: center; padding: 4px 0; transform: rotate(90deg); }
+    .painel-etapa { padding: 20px 16px; }
+    .check { flex-direction: column; align-items: flex-start; gap: 8px; }
+  }
+  .teste-visual { display: none !important; }
+</style>
+</head>
+<body>
+<div class="app">
+
+
+  <main>
+    <!-- PAINEL -->
+    <section class="tela ativa" id="tela-painel">
+      <div class="teste-visual" style="margin:0 0 22px">
+        <button data-tema="caverna">Teste: preto e dourado</button>
+        <button data-tema="verde">Teste: todo verde</button>
+      </div>
+      <div class="kicker" style="margin-bottom:22px">Caverna · Sistema do Negócio</div>
+      <div class="nome-negocio" id="nome-negocio"></div>
+      <h1 class="titulo">Check-up do <em>Negócio</em></h1>
+      <div class="corrente" id="corrente"></div>
+      <div class="teste-visual">
+        <button data-visual="circulos">Teste: círculos</button>
+        <button data-visual="cartoes">Teste: cartões</button>
+      </div>
+      <div class="sistema" id="sistema"></div>
+      <div class="grade-setores" id="grade-setores"></div>
+      <div class="boas-vindas" style="margin-top:28px">
+        <input id="campo-nome" placeholder="Seu nome" autocomplete="given-name">
+        <input id="campo-metodo" placeholder="Nome do seu projeto">
+      </div>
+      <div class="acoes-finais"><button class="btn contorno" data-ir="resultado">Ver meu resultado →</button></div>
+    </section>
+
+    <!-- SETORES (montados pelo script) -->
+    <div id="telas-setores"></div>
+
+    <!-- RESULTADO -->
+    <section class="tela" id="tela-resultado">
+      <div class="kicker">Check-up do Negócio</div>
+      <h1 class="titulo" id="titulo-resultado">O resultado do seu <em>check-up</em></h1>
+      <p class="sub" id="resultado-sub"></p>
+      <div class="grade-setores" id="resultado-medidores"></div>
+      <div class="resultado-lista" id="resultado-lista"></div>
+      <div class="acoes-finais">
+        <button class="btn whats" id="enviar-jade">Enviar para a Jade no WhatsApp</button>
+        <button class="btn contorno" data-ir="painel">Voltar ao painel</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+// ── O SISTEMA: setores → etapas → itens do checklist ──
+const setores = [
+  {
+    id: 'funil', icone: '🧲', nome: 'Funil de vendas', frase: 'A porta do negócio sempre aberta',
+    escrever: 'Hoje, de onde vêm as pessoas que compram de você?',
+    etapas: [
+      { icone: '📣', nome: 'Criativo', pra: 'O anúncio que alcança a lead que ainda não te conhece.', itens: [
+        ['Tenho criativos prontos (vídeo ou imagem)', 'Faltam criativos prontos (vídeo ou imagem)'],
+        ['Tenho anúncios rodando no tráfego', 'Faltam anúncios rodando no tráfego'],
+        ['Sei quanto invisto por dia e quanto custa cada lead', 'Falta saber quanto investir por dia e quanto custa cada lead']
+      ]},
+      { icone: '🖥️', nome: 'Página', pra: 'Para onde a lead vai: quiz, VSL, captura ou página de vendas.', itens: [
+        ['Tenho uma página publicada para receber a lead', 'Falta uma página publicada para receber a lead'],
+        ['A página explica a promessa do meu método', 'Falta a página explicar a promessa do seu método'],
+        ['O pixel está instalado na página', 'Falta instalar o pixel na página']
+      ]},
+      { icone: '📲', nome: 'Captura', pra: 'Onde a lead chega e fica registrada.', itens: [
+        ['A lead chega até mim (WhatsApp, lista ou formulário)', 'Falta um caminho para a lead chegar até você (WhatsApp, lista ou formulário)'],
+        ['Cada lead fica anotada em um lugar só', 'Falta anotar cada lead em um lugar só'],
+        ['Sei quantas leads chegaram no último mês', 'Falta acompanhar quantas leads chegam por mês']
+      ]},
+      { icone: '🎯', nome: 'Oferta', pra: 'O momento em que a lead conhece o convite para comprar.', itens: [
+        ['A lead recebe o convite para a minha oferta', 'Falta levar a lead até o convite da sua oferta'],
+        ['Se eu parar de postar por 30 dias, as vendas continuam chegando', 'Falta um funil que venda mesmo quando você para de postar']
+      ]}
+    ]
+  },
+  {
+    id: 'comercial', icone: '🤝', nome: 'Comercial', frase: 'Onde a lead vira aluna',
+    escrever: 'Como é hoje a sua conversa de venda, do primeiro "oi" ao pagamento?',
+    etapas: [
+      { icone: '💬', nome: 'Conversa', pra: 'O primeiro contato com a lead no WhatsApp.', itens: [
+        ['Tenho um roteiro de conversa escrito', 'Falta um roteiro de conversa escrito'],
+        ['Faço perguntas para entender o momento da lead', 'Falta fazer perguntas para entender o momento da lead'],
+        ['Outra pessoa conseguiria seguir esse roteiro no meu lugar', 'Falta um roteiro que outra pessoa consiga seguir no seu lugar']
+      ]},
+      { icone: '🔁', nome: 'Follow-up', pra: 'O cuidado com quem não respondeu ou não fechou.', itens: [
+        ['Tenho uma sequência de mensagens de follow-up', 'Falta uma sequência de mensagens de follow-up'],
+        ['Sei o que fazer com a lead que não comprou agora', 'Falta um destino para a lead que não comprou agora']
+      ]},
+      { icone: '✍️', nome: 'Fechamento', pra: 'O momento do sim.', itens: [
+        ['Tenho respostas prontas para as objeções mais comuns', 'Faltam respostas prontas para as objeções mais comuns'],
+        ['O pagamento é simples (link, Pix, parcelamento)', 'Falta um pagamento simples (link, Pix, parcelamento)'],
+        ['Tenho contrato ou termos de compra', 'Falta um contrato ou termos de compra']
+      ]},
+      { icone: '🎁', nome: 'Onboarding', pra: 'Do pagamento à primeira aula, sem depender de você.', itens: [
+        ['A aluna recebe uma boas-vindas logo depois de pagar', 'Falta uma boas-vindas logo depois do pagamento'],
+        ['Ela acessa a plataforma sozinha', 'Falta a aluna conseguir acessar a plataforma sozinha'],
+        ['Tenho uma rotina de encontros com as alunas', 'Falta uma rotina de encontros com as alunas']
+      ]}
+    ]
+  },
+  {
+    id: 'produto', icone: '💎', nome: 'Produto', frase: 'O que nasce do método e sustenta o negócio',
+    escrever: 'O que está travando o seu produto hoje?',
+    etapas: [
+      { icone: '🧭', nome: 'Método', pra: 'O caminho que a aluna percorre, com começo, meio e fim.', itens: [
+        ['Meu método tem nome e etapas definidas', 'Falta definir o nome e as etapas do seu método'],
+        ['Cada etapa tem um entregável claro (o que a aluna sai fazendo)', 'Falta um entregável claro em cada etapa (o que a aluna sai fazendo)'],
+        ['Sei explicar meu método em 1 minuto', 'Falta saber explicar o seu método em 1 minuto']
+      ]},
+      { icone: '🎬', nome: 'Aulas', pra: 'O método gravado, para não depender da sua agenda.', itens: [
+        ['Todas as aulas estão gravadas', 'Falta gravar todas as aulas'],
+        ['As aulas estão publicadas na plataforma', 'Falta publicar as aulas na plataforma'],
+        ['As ferramentas e os materiais de apoio estão prontos', 'Falta preparar as ferramentas e os materiais de apoio']
+      ]},
+      { icone: '🪜', nome: 'Ecossistema', pra: 'Os produtos que levam a aluna de um nível ao outro.', itens: [
+        ['Tenho um produto de entrada (mais barato ou gratuito)', 'Falta um produto de entrada (mais barato ou gratuito)'],
+        ['Tenho um produto principal', 'Falta um produto principal'],
+        ['Tenho um caminho de continuidade para quem termina', 'Falta um caminho de continuidade para quem termina']
+      ]},
+      { icone: '🏷️', nome: 'Oferta', pra: 'Como o produto é apresentado e vendido.', itens: [
+        ['Meu preço está definido e eu me sinto segura com ele', 'Falta definir um preço com o qual você se sinta segura'],
+        ['Tenho uma apresentação da oferta (slides ou página)', 'Falta uma apresentação da oferta (slides ou página)'],
+        ['Tenho link de pagamento e condições definidas', 'Faltam o link de pagamento e as condições definidas']
+      ]}
+    ]
+  },
+  {
+    id: 'editorial', icone: '✨', nome: 'Linha editorial', frase: 'O conteúdo que conversa com o funil',
+    escrever: 'Qual é hoje a sua maior dificuldade com conteúdo?',
+    etapas: [
+      { icone: '🪞', nome: 'Perfil', pra: 'O Instagram que recebe quem chega.', itens: [
+        ['Minha bio explica quem sou, o que faço e para quem', 'Falta a bio explicar quem você é, o que faz e para quem'],
+        ['Tenho posts fixados que apresentam meu método', 'Faltam posts fixados que apresentem o seu método'],
+        ['Meus destaques estão organizados', 'Falta organizar os destaques']
+      ]},
+      { icone: '🧩', nome: 'Planejamento', pra: 'O que postar, para quem e por quê.', itens: [
+        ['Preenchi a Fase 1 do Cubo Mágico', 'Falta preencher a Fase 1 do Cubo Mágico'],
+        ['Tenho conteúdo para quem ainda não sabe que tem o problema', 'Falta conteúdo para quem ainda não sabe que tem o problema'],
+        ['Planejo a semana antes de postar', 'Falta planejar a semana antes de postar']
+      ]},
+      { icone: '🎥', nome: 'Produção', pra: 'Quem grava, quem edita e quem posta.', itens: [
+        ['Sei quem grava, quem edita e quem posta', 'Falta definir quem grava, quem edita e quem posta'],
+        ['Tenho uma rotina de gravação fixa', 'Falta uma rotina de gravação fixa'],
+        ['Posto com frequência, mesmo nas semanas corridas', 'Falta postar com frequência, mesmo nas semanas corridas']
+      ]},
+      { icone: '🔗', nome: 'Conexão', pra: 'O conteúdo que leva a seguidora para o funil.', itens: [
+        ['Meus conteúdos chamam para a minha porta de entrada', 'Faltam conteúdos que chamem para a sua porta de entrada'],
+        ['Sei quais conteúdos trazem leads de verdade', 'Falta saber quais conteúdos trazem leads de verdade']
+      ]}
+    ]
+  }
+];
+
+// ── Respostas guardadas no navegador da aluna ──
+const CHAVE = 'painel-negocio-caverna';
+let dados = { nome: '', metodo: '', r: {}, txt: {} };
+try { dados = Object.assign(dados, JSON.parse(localStorage.getItem(CHAVE)) || {}); } catch (e) {}
+function salvar() { try { localStorage.setItem(CHAVE, JSON.stringify(dados)); } catch (e) {} }
+
+// ── Contas ──
+function itensDaEtapa(s, ei) { return s.etapas[ei].itens.map((_, ii) => s.id + '-' + ei + '-' + ii); }
+function calcular(chaves) {
+  const resp = chaves.filter(k => dados.r[k] !== undefined);
+  if (!resp.length) return null;
+  const soma = resp.reduce((t, k) => t + (dados.r[k] || 0), 0);
+  return Math.round(soma / resp.length * 100); // só conta o que ela já respondeu
+}
+function chavesDoSetor(s) { return s.etapas.flatMap((_, ei) => itensDaEtapa(s, ei)); }
+function respondidos(s) { const c = chavesDoSetor(s); return c.filter(k => dados.r[k] !== undefined).length + '/' + c.length; }
+function cor(p) { return p === null ? 'var(--grey)' : p < 40 ? 'var(--red)' : p < 75 ? 'var(--yellow)' : 'var(--green)'; }
+function rotulo(p) { return p === null ? 'não respondido' : p < 40 ? 'no começo' : p < 75 ? 'em construção' : 'quase pronto'; }
+
+// Verde = pronto, vermelho = o que falta
+function corFalta(p) { return p === 100 ? 'var(--ok)' : 'var(--falta)'; } // sem resposta = tudo falta
+function trilho(p) { return 'rgba(232,128,95,.55)'; }
+function anel(p) { return `conic-gradient(var(--ok) ${p || 0}%, var(--falta) 0)`; }
+
+function medidorHTML(p) {
+  const fragil = p === null ? '100%' : (100 - p) + '%';
+  return `<div class="medidor">
+    <div class="linha"><span class="valor" style="color:${corFalta(p)}">${fragil}</span><span class="rotulo" style="color:${corFalta(p)}">${p === 100 ? 'pronto' : 'para finalizar · ' + rotulo(p)}</span></div>
+    <div class="barra" style="background:${trilho(p)}"><span style="width:${p === null ? 0 : p}%;background:var(--ok)"></span></div>
+  </div>`;
+}
+
+// ── Monta menu, cards e telas ──
+const telas = document.getElementById('telas-setores');
+setores.forEach((s, i) => {
+  const t = document.createElement('section');
+  t.className = 'tela'; t.id = 'tela-' + s.id;
+  const fluxo = s.etapas.map((e, ei) => `
+    ${ei ? '<div class="seta">→</div>' : ''}
+    <button class="etapa" data-etapa="${s.id}-${ei}">
+      <div class="icone">${e.icone}</div>
+      <div class="nome">${e.nome}</div>
+      <div class="estado" data-estado="${s.id}-${ei}"></div>
+      <div class="mini"><span data-mini="${s.id}-${ei}"></span></div>
+    </button>`).join('');
+  const prox = setores[i + 1];
+  t.innerHTML = `
+    <button class="voltar" data-ir="painel">← Voltar ao painel</button>
+    <div class="cabeca-setor">
+      <div>
+        <div class="kicker">Setor ${String(i + 1).padStart(2, '0')}</div>
+        <h1 class="titulo">${s.icone} ${s.nome}</h1>
+        <p class="sub">${s.frase}. Toque em cada etapa e marque o que você já tem. No final, não esqueça de responder a pergunta: digite ou toque em <span class="ouro">Falar</span>.</p>
+      </div>
+      <div data-medidor="${s.id}"></div>
+    </div>
+    <div class="fluxo">${fluxo}</div>
+    <p class="dica-fluxo">Uma etapa solta quebra o caminho inteiro.</p>
+    <div class="painel-etapa" data-painel="${s.id}"></div>
+    <div class="escrever">
+      <label>${s.escrever}</label>
+      <div class="caixa-voz">
+        <textarea data-txt="${s.id}" placeholder="Toque no microfone e fale, ou escreva com as suas palavras..."></textarea>
+        <button class="mic" type="button" data-mic="${s.id}"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-2.08A7 7 0 0 0 19 12h-2z"/></svg><span>Falar</span></button>
+      </div>
+      <p class="aviso-voz" data-aviso="${s.id}"></p>
+    </div>
+    <div class="proximo-setor">
+      <button class="btn" data-ir="${prox ? prox.id : 'resultado'}">${prox ? 'Próximo setor: ' + prox.nome + ' →' : 'Ver meu resultado →'}</button>
+    </div>`;
+  telas.appendChild(t);
+});
+
+// Abre o checklist de uma etapa
+function abrirEtapa(sid, ei) {
+  const s = setores.find(x => x.id === sid), e = s.etapas[ei];
+  document.querySelectorAll(`[data-etapa^="${sid}-"]`).forEach(b => b.classList.toggle('aberta', b.dataset.etapa === sid + '-' + ei));
+  const p = document.querySelector(`[data-painel="${sid}"]`);
+  p.innerHTML = `<div class="kicker">Etapa ${ei + 1} de ${s.etapas.length}</div><h3>${e.icone} ${e.nome}</h3><p class="pra-que">${e.pra}</p>` +
+    e.itens.map((txt, ii) => {
+      const k = sid + '-' + ei + '-' + ii;
+      return `<div class="check"><p>${txt[0]}</p><div class="opcoes" data-k="${k}">
+        <button data-v="1">Tenho</button><button data-v="0.5">Pela metade</button><button data-v="0">Não tenho</button></div></div>`;
+    }).join('') +
+    (ei < s.etapas.length - 1 ? `<div class="proximo-setor"><button class="btn contorno" data-proxima="${sid}-${ei + 1}">Próxima etapa: ${s.etapas[ei + 1].nome} →</button></div>` : '');
+  marcarOpcoes();
+}
+
+function marcarOpcoes() {
+  document.querySelectorAll('.opcoes').forEach(o => {
+    o.querySelectorAll('button').forEach(b => b.classList.toggle('on', dados.r[o.dataset.k] === Number(b.dataset.v)));
+  });
+}
+
+// ── Atualiza números e cores em toda a página ──
+function atualizar() {
+  const nome = dados.nome.trim().split(' ')[0];
+  document.getElementById('nome-negocio').textContent = dados.metodo || (nome ? 'Negócio da ' + nome : '');
+
+  // A roda: funil atrai → comercial vende → produto entrega → linha editorial conecta
+  const roda = [['funil', 'atrai', 21.7, 21.7], ['comercial', 'vende', 78.3, 21.7], ['produto', 'entrega', 78.3, 78.3], ['editorial', 'conecta', 21.7, 78.3]];
+  const nomeCurto = { editorial: 'Linha editorial', funil: 'Funil de vendas', comercial: 'Comercial', produto: 'Produto' };
+  document.getElementById('sistema').innerHTML = `
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(232,201,106,.35)" stroke-width=".5" stroke-dasharray="1.5 1.5"/>
+      <g fill="var(--gold)">
+        <polygon points="48.5,8.5 51.5,10 48.5,11.5"/><polygon points="88.5,48.5 90,51.5 91.5,48.5"/>
+        <polygon points="51.5,88.5 48.5,90 51.5,91.5"/><polygon points="8.5,51.5 10,48.5 11.5,51.5"/>
+      </g>
+      <circle r="1.1" fill="var(--gold2)"><animateMotion dur="9s" repeatCount="indefinite" path="M50,10 A40,40 0 1,1 49.99,10"/></circle>
+      <circle r=".8" fill="var(--accent)"><animateMotion dur="9s" begin="-4.5s" repeatCount="indefinite" path="M50,10 A40,40 0 1,1 49.99,10"/></circle>
+    </svg>
+    ${roda.map(([id, verbo, x, y]) => {
+      const s = setores.find(z => z.id === id), p = calcular(chavesDoSetor(s));
+      const f = p === null ? 0 : 100 - p;
+      return `<button class="no" data-ir="${id}" style="left:${x}%;top:${y}%;background:${anel(p)}">
+        <span class="miolo"><span class="ic">${s.icone}</span><span class="nm">${nomeCurto[id]}</span>
+        <span class="pc" style="color:${corFalta(p)}">${p === null ? 'falta 100%' : p === 100 ? '✓' : 'falta ' + f + '%'}</span><span class="vb">${verbo}</span></span></button>`;
+    }).join('')}
+    <div class="centro"><div class="k">Seu sistema</div><div class="t">ligado</div></div>`;
+  const visual = dados.visual || 'circulos';
+  document.getElementById('sistema').style.display = visual === 'circulos' ? '' : 'none';
+  document.getElementById('grade-setores').style.display = visual === 'cartoes' ? '' : 'none';
+  document.querySelectorAll('[data-visual]').forEach(b => b.classList.toggle('on', b.dataset.visual === visual));
+
+  const grade = document.getElementById('grade-setores');
+  grade.innerHTML = setores.map((s, i) => {
+    const p = calcular(chavesDoSetor(s));
+    return `<button class="card-setor" data-ir="${s.id}">
+      <div class="num">Setor ${String(i + 1).padStart(2, '0')} · ${respondidos(s)} itens</div>
+      <h3>${s.icone} ${s.nome}</h3><div class="frase">${s.frase}</div>
+      ${medidorHTML(p)}
+      <div class="abrir">${p === null ? 'Começar este setor →' : 'Abrir setor →'}</div>
+    </button>`;
+  }).join('');
+
+  setores.forEach(s => {
+    const p = calcular(chavesDoSetor(s));
+    document.querySelector(`[data-medidor="${s.id}"]`).innerHTML = medidorHTML(p);
+    s.etapas.forEach((e, ei) => {
+      const pe = calcular(itensDaEtapa(s, ei));
+      const est = document.querySelector(`[data-estado="${s.id}-${ei}"]`);
+      est.textContent = rotulo(pe); est.style.color = cor(pe);
+      const m = document.querySelector(`[data-mini="${s.id}-${ei}"]`);
+      m.style.width = (pe === null ? 0 : pe) + '%'; m.style.background = 'var(--ok)'; m.parentElement.style.background = trilho(pe);
+    });
+  });
+
+  // Orientação: como fazer o check-up
+  const feitos = setores.filter(s => calcular(chavesDoSetor(s)) !== null).length;
+  const faltam = setores.length - feitos;
+  document.getElementById('corrente').innerHTML = `<h3>Como fazer o seu <em>check-up</em></h3>
+    <ol class="passos">
+      <li>Toque em cada setor do seu sistema e <span class="ouro">marque</span> o que você já tem.</li>
+      <li>Não esqueça de responder a pergunta no final de cada setor: digite ou toque em <span class="ouro">Falar</span> e grave a sua resposta.</li>
+      <li>Quando finalizar todos os setores, <span class="ouro">escreva</span> abaixo o seu nome e o nome do seu projeto.</li>
+      <li>Veja o seu resultado e <span class="ouro">envie</span> para a Jade pelo WhatsApp.</li>
+    </ol>
+    <p>${faltam ? `Faltam <strong>${faltam} de ${setores.length}</strong> setores.` : '<strong>Os 4 setores estão marcados.</strong> Agora é só ver o seu resultado.'}</p>`;
+}
+
+function montarResultado() {
+  const primeiro = dados.nome.trim().split(' ')[0];
+  document.getElementById('titulo-resultado').innerHTML = primeiro
+    ? `<span class="ouro">${primeiro}</span>, aqui está o resultado do seu <em>check-up</em>`
+    : 'O resultado do seu <em>check-up</em>';
+  const notas = setores.map(s => ({ s, p: calcular(chavesDoSetor(s)) }));
+  const frageis = notas.filter(n => n.p === null || n.p < 40).length; // sem resposta também conta como no começo
+  document.getElementById('resultado-sub').textContent = frageis
+    ? `Você tem ${frageis} ${frageis > 1 ? 'setores' : 'setor'} ainda no começo. Setores soltos não geram previsibilidade de vendas: cada venda ainda depende do seu esforço do dia.`
+    : 'Seus setores estão se conectando. Agora é ajustar os pontos que faltam para o sistema rodar sozinho.';
+  document.getElementById('resultado-medidores').innerHTML = notas.map(n =>
+    `<div class="card-setor"><h3>${n.s.icone} ${n.s.nome}</h3>${medidorHTML(n.p)}</div>`).join('');
+  document.getElementById('resultado-lista').innerHTML = notas.map(n => {
+    const falta = [];
+    n.s.etapas.forEach((e, ei) => e.itens.forEach((txt, ii) => {
+      const v = dados.r[n.s.id + '-' + ei + '-' + ii] || 0;
+      if (v < 1) falta.push(`<span class="ouro">${e.nome}</span> · ${txt[1]}${v === 0.5 ? ' <em>(pela metade)</em>' : ''}`);
+    }));
+    return `<div class="resultado-item"><h3>O que falta em ${n.s.nome}</h3>
+      ${falta.length ? '<ul>' + falta.map(f => '<li>' + f + '</li>').join('') + '</ul>' : '<p style="font-size:.82rem;color:var(--green)">Tudo pronto neste setor.</p>'}</div>`;
+  }).join('');
+}
+
+// ── Navegação ──
+function ir(destino) {
+  document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+  document.getElementById('tela-' + destino).classList.add('ativa');
+  if (destino === 'resultado') montarResultado();
+  const s = setores.find(x => x.id === destino);
+  if (s) {
+    const aberta = document.querySelector(`[data-etapa^="${s.id}-"].aberta`);
+    if (!aberta) abrirEtapa(s.id, 0);
+  }
+  history.replaceState(null, '', '#' + destino);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.addEventListener('click', ev => {
+  const alvo = ev.target.closest('[data-ir],[data-tema],[data-visual],[data-etapa],[data-proxima],.opcoes button');
+  if (!alvo) return;
+  if (alvo.matches('.opcoes button')) {
+    dados.r[alvo.parentElement.dataset.k] = Number(alvo.dataset.v);
+    salvar(); marcarOpcoes(); atualizar(); return;
+  }
+  if (alvo.dataset.ir) return ir(alvo.dataset.ir);
+  if (alvo.dataset.tema) { dados.tema = alvo.dataset.tema; salvar(); return aplicarTema(); }
+  if (alvo.dataset.visual) { dados.visual = alvo.dataset.visual; salvar(); return atualizar(); }
+  const ref = alvo.dataset.etapa || alvo.dataset.proxima;
+  const [sid, ei] = ref.split('-');
+  abrirEtapa(sid, Number(ei));
+  document.querySelector(`[data-painel="${sid}"]`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+// Campos de texto
+const campoNome = document.getElementById('campo-nome'), campoMetodo = document.getElementById('campo-metodo');
+campoNome.value = dados.nome; campoMetodo.value = dados.metodo;
+campoNome.addEventListener('input', () => { dados.nome = campoNome.value; salvar(); atualizar(); });
+campoMetodo.addEventListener('input', () => { dados.metodo = campoMetodo.value; salvar(); atualizar(); });
+document.querySelectorAll('[data-txt]').forEach(t => {
+  t.value = dados.txt[t.dataset.txt] || '';
+  t.addEventListener('input', () => { dados.txt[t.dataset.txt] = t.value; salvar(); });
+});
+
+// ── Microfone: ela fala e o texto aparece na caixa ──
+const Reconhecer = window.SpeechRecognition || window.webkitSpeechRecognition;
+let ouvindo = null; // { rec, id, base }
+function pararMic() {
+  if (!ouvindo) return;
+  ouvindo.rec.stop();
+  const b = document.querySelector(`[data-mic="${ouvindo.id}"]`);
+  b.classList.remove('gravando'); b.querySelector('span').textContent = 'Falar';
+  ouvindo = null;
+}
+document.querySelectorAll('[data-mic]').forEach(b => b.addEventListener('click', () => {
+  const id = b.dataset.mic, aviso = document.querySelector(`[data-aviso="${id}"]`);
+  if (!Reconhecer) {
+    aviso.textContent = 'Seu navegador não liberou o microfone aqui. Toque na caixa e use o microfone do teclado do celular.';
+    document.querySelector(`[data-txt="${id}"]`).focus();
+    return;
+  }
+  if (ouvindo && ouvindo.id === id) return pararMic();
+  pararMic();
+  const caixa = document.querySelector(`[data-txt="${id}"]`);
+  const rec = new Reconhecer();
+  rec.lang = 'pt-BR'; rec.continuous = true; rec.interimResults = true;
+  const base = caixa.value ? caixa.value.replace(/\s*$/, ' ') : '';
+  ouvindo = { rec, id };
+  rec.onresult = ev => {
+    let fala = '';
+    for (let i = 0; i < ev.results.length; i++) fala += ev.results[i][0].transcript;
+    caixa.value = base + fala.trim();
+    dados.txt[id] = caixa.value; salvar();
+  };
+  rec.onerror = ev => {
+    aviso.textContent = ev.error === 'not-allowed'
+      ? 'Para falar, permita o uso do microfone quando o celular perguntar.'
+      : 'Não consegui ouvir. Toque em Falar de novo.';
+    pararMic();
+  };
+  rec.onend = () => { if (ouvindo && ouvindo.rec === rec) pararMic(); };
+  rec.start();
+  aviso.textContent = 'Estou ouvindo... Quando terminar, toque em Parar.';
+  b.classList.add('gravando'); b.querySelector('span').textContent = 'Parar';
+}));
+
+// ── Enviar para a Jade ──
+document.getElementById('enviar-jade').addEventListener('click', () => {
+  let msg = `Oi, Jade! Fiz o Check-up do Negócio.\n\n👤 *${dados.nome || 'Sem nome'}*` + (dados.metodo ? `\n✨ ${dados.metodo}` : '') + '\n';
+  // Primeiro o resumo: quanto de cada setor já está construído
+  msg += '\n*QUANTO JÁ ESTÁ CONSTRUÍDO*\n';
+  setores.forEach(s => { msg += `${s.icone} ${s.nome}: ${calcular(chavesDoSetor(s)) || 0}%\n`; });
+  // Depois o que falta, setor por setor
+  setores.forEach(s => {
+    msg += `\n*O QUE FALTA EM ${s.nome.toUpperCase()}*\n`;
+    if (chavesDoSetor(s).every(k => dados.r[k] === 1)) msg += '✅ Nada, este setor está pronto\n';
+    s.etapas.forEach((e, ei) => e.itens.forEach((txt, ii) => {
+      const v = dados.r[s.id + '-' + ei + '-' + ii];
+      if (v !== 1) msg += `${v === 0.5 ? '◐' : '○'} ${e.nome}: ${txt[1]}${v === 0.5 ? ' (pela metade)' : ''}\n`;
+    }));
+    if (dados.txt[s.id]) msg += `✍️ ${s.escrever} ${dados.txt[s.id]}\n`;
+  });
+  window.open('https://api.whatsapp.com/send?phone=5598985196559&text=' + encodeURIComponent(msg), '_blank');
+});
+
+function aplicarTema() {
+  const tema = dados.tema || 'caverna';
+  document.body.classList.toggle('caverna', tema === 'caverna');
+  document.querySelectorAll('[data-tema]').forEach(b => b.classList.toggle('on', b.dataset.tema === tema));
+}
+aplicarTema();
+
+// Começa onde o link mandar (#funil, #produto...) ou no painel
+atualizar();
+const inicio = location.hash.slice(1);
+ir(document.getElementById('tela-' + inicio) ? inicio : 'painel');
+</script>
+</body>
+</html>
